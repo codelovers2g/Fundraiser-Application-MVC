@@ -1,0 +1,461 @@
+﻿<style>
+    /*.disable {
+        background-color: #cccccc;
+        color: #666666;
+        pointer-events: none;
+        text-decoration: none;
+    }*/
+
+    .swal2-title {
+        font-size: 1.375em;
+    }
+</style>
+
+<div class="container-fluid">
+    <input type="hidden" id="ViewId" value=@ViewBag.Message />    
+    <div id="StatementWindow">
+        <h2 id="pageHeading">@ViewBag.Heading</h2>
+    </div>
+    <div class="row">
+        <div class="col-lg-6" id="tempalteLeft">
+            <div class="row">
+                <div class="form-inline col-8">
+                    <div class="form-group w-100">
+                        <label for="ddlTemplate"> Template &nbsp;</label>
+                        <select class="form-control w-25 mr-2" id="ddlTemplate">
+                        </select>
+                        <button id="btnSetTemplateDefault" type="button" class="btn btn-round btn-info" @*onclick="PrintReport.SetDefaultStatementFormat()"*@>Set as default</button>
+                        <button id="btnDeleteTemplate" type="button" class="ml-2 btn btn-round btn-danger d-none" onclick="commonTemplate.DeleteTemplate()">Delete</button>
+                    </div>
+
+                </div>
+                <div class="col-lg-4 text-right my-auto" id="printStatementDiv">
+                    <a href="#" class="btn btn-secondary d-none" title="Number of person" data-toggle="title" id="personCounterPrint"></a>
+                    <button class="btn btn-info d-none" id="btnPrintStatement">Print Statement</button>
+                    <button class="btn btn-info d-none" id="btnPrintStatementAll" >Print statement</button>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 my-auto">
+            <div class="row">
+                <div class="btn-group btn-group-toggle col-4" data-toggle="buttons">
+                   
+                    <label class="btn btn-outline-primary active" id="BtnDesignWindow">
+                        <input type="radio" name="options" id="btnDesign" autocomplete="off" checked> Design
+                    </label>
+                    <label class="btn btn-outline-primary" id="BtnPreviewWindow">
+                        <input type="radio" name="options" id="btnPreview" autocomplete="off"> Preview
+                    </label>
+                </div>
+                <div id="nextprevBtns" class="col-7 ml-2">
+
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 text-right my-auto" id="btnEmailStatementDiv">
+            <a href="#" class="btn btn-secondary d-none" title="Number of person" data-toggle="title" id="personCounterEmail"></a>
+            <button class="btn btn-info text-white d-none" id="btnEmailStatement">Email Statement</button>
+            <button class="btn btn-info text-white d-none" id="btnEmailStatementAll">Email statement</button>
+            <button type="button" id="btnmsg" class="btn  btn-primary float-right ">Save Message</button>
+        </div>
+        @*<div class="col-lg-3 text-right my-auto d-none" id="btnmsgdiv">
+                  
+        </div>*@
+        <div class="col-lg-3  col-md-12 form-inline justify-content-end d-none" id="btnsTemplateinReceipt">
+            <button type="button" id="btntemplateSave" class="btn  btn-primary float-right ">Save Template</button>           
+
+            <button type="button" id="btnSaveTemplate" class="btn btn-primary btn-round float-right mx-2" @*onclick="StatementSettings.SaveTemplate()"*@>Save Template As</button>
+            <button type="button" id="statementSettingModalCancel" class="btn btn-danger btn-round float-right">Reset</button>
+
+        </div>
+
+    </div>
+    <input type="hidden" id="hdnCategoryId" value="@ViewBag.categoryId">
+    <input type="hidden" id="hdnDateForLedger" value="@ViewBag.DateForLedger">
+    <input type="hidden" id="hdnBackgroundImage" value="" />
+    <input type="hidden" id="hdnAttachments" value="">
+    <input type="hidden" id="hdnAttachmentsPath" value="">
+    @*<input type="hidden" id="hdnAttachmentsPath" value="">*@
+<div id="PreviewModeWindow" class="d-none">
+
+    <div class="row ">
+        <div class="col-sm-6" id="printStatementDiv">
+            <div id="formatContent" class="" style="padding: 0">
+                <div id="contentContainer" style="padding:1rem;min-height:8in;">
+                    <div id="statementHeader"></div>
+                    <div id="statementBody"></div>
+                    <div id="statementFooter"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6" id="emailStatementDiv">
+            <form>
+                <div class="form-group">
+                    <label for="txtEmailSubjectReportPreview">Email Subject</label>
+                    <input type="text" class="form-control" id="txtEmailSubjectReportPreview" readonly />
+                </div>
+                <div class="form-group">
+                    <label for="ckEmailBodyPreview">Email Body</label>
+                    <div id="ckEmailBodyPreview"></div>
+                </div>
+                <div id="attachmentDiv">
+
+                    <div id="fileAttachmentPreviewNames"></div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-6" id="AdditionalText1Div">
+           @* <div class="col-12"><label>Add Additional Text 1:</label></div>*@
+            <div class="row">
+                <div class="col-sm-9 mb-3"><input id="AdditionalText1" autocomplete="off" class="form-control" style="width:104%; height:40px; border-style:none none solid none;" placeholder="Enter Additional Text 1 Here" /></div>
+                <div class="col-sm-2">
+                    <div class="btn btn-info" id="btnAdditionalText1" style="margin: 1px 4px;">Add Text 1</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6" id="AdditionalText2Div">
+           @*<div class="col-12"><label>Add Additional Text 2:</label></div>*@
+            <div class="row">
+                <div class="col-sm-9"><input id="AdditionalText2" class="form-control" autocomplete="off"  style="width:104%; height:40px; border-style:none none solid none;" placeholder="Enter Additional Text 2 Here" /></div>
+                <div class="col-sm-2">
+                    <div class="btn btn-info" id="btnAdditionalText2" style="margin: 1px 4px;">Add Text 2</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <div id="DesignModeWindow" class="">
+        <input type="hidden" id="hdnPersonIdforPreview">       
+        <div class="row px-3" id="emailTemplatediv">
+            <div class="columns col-sm-5">
+                <form id="statementForm" tabindex="1">
+                    <div class="form-group d-none">
+                        <label for="txtStatementHeader">
+                            Statement Header
+                        </label>
+                        <textarea name="txtStatementHeader" id="txtStatementHeader" class=""></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="ckStatementBody">Statement Body</label>
+                        <textarea name="ckStatementBody" id="ckStatementBody" class=""></textarea>
+                    </div>
+                    <div class="form-group d-none">
+                        <label for="txtStatementFooter">Statement Footer</label>
+                        <textarea name="txtStatementFooter" id="txtStatementFooter" class=""></textarea>
+                    </div>
+                    <div class="form-group d-inline-block" id="bgFileUploadDiv">
+                    </div>                
+                    <div id="bgFilePreview">
+                    </div>
+                </form>
+            </div>
+            <div class="col-sm-2">
+                <h5 class="text-center">Merge Fields</h5>
+                <div id="accordion" class="accordion">
+                    <div class="card mb-0" id="accordianBody">
+                        <div class="card-header " data-toggle="collapse" href="#collapseOne">
+                            <a class="card-title">
+                                Organization Fields
+                            </a>
+                        </div>
+                        <div id="collapseOne" class="card-body collapse show" data-parent="#accordion">
+                            <div class="contacts text-left">
+                                <ul id="contactListOrganization" class="myDragabble">
+                                    <li><div class="mydraggable" draggable="true">[OrganizationAddress]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[OrganizationHebrewName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[OrganizationLogo]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[OrganizationName]</div></li>
+
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo">
+                            <a class="card-title">
+                                People Fields English
+                            </a>
+                        </div>
+                        <div id="collapseTwo" class="card-body collapse" data-parent="#accordion">
+                            <div class="contacts text-left">
+                                <ul id="contactListPeople" class="myDragabble">
+                                    <li><div class="mydraggable" draggable="true">[Address]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[Aliya]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[Anniversary]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[BusinessPhone]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[CallName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[DeceasedDate]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[DOB]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FamilyOf]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherCallName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherFirstName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherLastName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherTitle]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherMiddleName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FormattedAddress]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[Gender]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[HomePhone]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[Married]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherCallName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherFirstName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherLastName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherTitle]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherMiddleName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[Name]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[PersonFirstName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[PersonLastName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[PersonTitle]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[SSN]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[Tribe]</div></li>
+                               
+                                
+                 
+
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-header collapsed" data-toggle="collapse" data-parent="#accordion" href="#collapseThree">
+                            <a class="card-title">
+                                People Fields Hebrew
+                            </a>
+                        </div>
+                        <div id="collapseThree" class="card-body collapse" data-parent="#accordion">
+                            <div class="contacts text-left">
+                                <ul id="contactListPeopleHebrew" class="myDragabble">
+                                    <li><div class="mydraggable" draggable="true">[AliyaH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[CallNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[HebrewName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherCallNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherFirstNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherLastNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherSuffix]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[FatherTitleH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherCallNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherFirstNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherLastNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherSuffix]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[MotherTitleH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[PersonFirstNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[PersonLastNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[PersonTitleH]</div></li>
+
+                                    <li><div class="mydraggable" draggable="true">[PersonSuffixH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[TribeH]</div></li>
+
+
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-header collapsed" data-toggle="collapse" href="#collapseFour">
+                            <a class="card-title">
+                                Category Fields
+                            </a>
+                        </div>
+                        <div id="collapseFour" class="card-body collapse" data-parent="#accordion">
+                            <div class="contacts text-left">
+                                <ul id="contactListCategory" class="myDragabble">
+                                    <li><div class="mydraggable" draggable="true">[Category]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[CategoryDescription]</div></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-header collapsed" data-toggle="collapse" href="#collapseFive">
+                            <a class="card-title">
+                                User Fields
+                            </a>
+                        </div>
+                        <div id="collapseFive" class="card-body collapse" data-parent="#accordion">
+                            <div class="contacts text-left">
+                                <ul id="contactListUser" class="myDragabble">
+                                    <li><div class="mydraggable" draggable="true">[UserAddress]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[UserEmail]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[UserFirstName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[UserLastName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[UserPhone]</div></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-header collapsed" data-toggle="collapse" href="#collapseSix" id="genericFieldsHeading">
+                            <a class="card-title">
+                                Generic Fields
+                            </a>
+                        </div>
+
+                        @{
+
+                            if (ViewBag.Message != "Receipt_Report")
+                            {
+
+                                <div id="collapseSix" class="card-body collapse statementGenerics" data-parent="#accordion">
+                                    <div class="contacts text-left">
+                                        <ul id="contactListGeneric" class="myDragabble">
+                                            <li><div class="mydraggable" draggable="true">[Balance]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[StatementFormat1]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[StatementFormat2]</div></li>
+                                            <li><div class="mydraggable Additional1MF" draggable="true" ><span>[AdditionalText1]</span></div></li>
+                                            <li><div class="mydraggable Additional2MF" draggable="true" ><span>[AdditionalText2]</span></div></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            }
+
+                            if (ViewBag.Message == "Receipt_Report")
+                            {
+                                <div id="collapseSix" class="card-body collapse receiptGenerics" data-parent="#accordion">
+                                    <div class="contacts text-left">
+                                        <ul id="contactListGeneric" class="myDragabble">
+                                            <!--  generic fields -->
+                                            <li><div class="mydraggable" draggable="true">[Amount]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[Event1]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[Event2]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[Honoree1]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[Honoree2]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[ManualReceipt]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[PaymentDate]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[PaymentMethod]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[ReceiptFormat1]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[ReceiptFormat2]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[ReceiptMessage]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[Solicitor1]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[Solicitor2]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[Solicitor3]</div></li>
+                                            <li><div class="mydraggable" draggable="true">[Solicitor4]</div></li>
+                                            <li><div class="mydraggable Additional1MF" draggable="true"><span>[AdditionalText1]</span></div></li>
+                                            <li><div class="mydraggable Additional2MF" draggable="true"><span>[AdditionalText2]</span></div></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            }
+
+                        }
+
+
+                        <div class="card-header collapsed d-none" id="associatedpersonEnglish" data-toggle="collapse" data-parent="#accordion" href="#collapseSeven">
+                            <a class="card-title">
+                                Associated Person Fields English
+                            </a>
+                        </div>
+                        <div id="collapseSeven" class="card-body collapse d-none" data-parent="#accordion">
+                            <div class="contacts text-left">
+                                <ul id="AssociatedPersonListEnglish" class="myDragabble">
+                                    <li><div class="mydraggable" draggable="true">[AssociatedAddress]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedAliya]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedAnniversary]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedBusinessPhone]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedCallName]</div></li>                                
+                                    <li><div class="mydraggable" draggable="true">[AssociatedDeceasedDate]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedDOB]</div></li>                                
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFamilyOf]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherCallName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherFirstName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherLastName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherTitle]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherMiddleName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFormattedAddress]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedGender]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedHomePhone]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMarried]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherCallName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherFirstName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherLastName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherTitle]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherMiddleName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedPersonFirstName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedPersonLastName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedPersonTitle]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedSSN]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedTribe]</div></li>  
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-header collapsed d-none" id="associatedPersonHebrew" data-toggle="collapse" data-parent="#accordion" href="#collapseEight">
+                            <a class="card-title">
+                                Associated Person Fields Hebrew
+                            </a>
+                        </div>
+                        <div id="collapseEight" class="card-body collapse d-none" data-parent="#accordion">
+                            <div class="contacts text-left">
+                                <ul id="AssociatedPersonListHebrew" class="myDragabble">
+                                    <li><div class="mydraggable" draggable="true">[AssociatedAliyaH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedCallNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedHebrewName]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherCallNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherFirstNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherLastNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherSuffix]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedFatherTitleH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherCallNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherFirstNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherLastNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherSuffix]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedMotherTitleH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedPersonFirstNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedPersonLastNameH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedPersonTitleH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedPersonSuffixH]</div></li>
+                                    <li><div class="mydraggable" draggable="true">[AssociatedTribeH]</div></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-5 d-none" id="emailStatementDiv">
+                <form>
+                    <div class="form-group">
+                        <label for="txtEmailSubjectReport">Email Subject</label>
+                        <input type="text" class="form-control" id="txtEmailSubjectReport" name="txtEmailSubjectReport" />
+                    </div>
+                    <div class="form-group">
+                        <label for="ckEmailBody">Email Body</label>
+                        <textarea id="ckEmailBody" name="ckEmailBody" class="ckeditor"></textarea>
+                    </div>
+                    <div id="attachmentDiv">
+                        <div class="form-group">
+                            <label for="fileAttachmentReport" class="">Attachments</label><input name="file" id="fileAttachmentReport" type="file" class="form-control-file" multiple />
+                        </div>
+
+                        <div id="fileAttachmentReportNames"></div>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="" type="checkbox" id="addStatementAsAttachment" value="1" checked>
+                        <label class="ml-2 mb-2" for="addStatementAsAttachment">Add Statement as Attachment</label>
+                    </div>
+                </form>
+            </div>
+
+            <div class="columns col-sm-5 " id="StatementSettingEmailDiv">
+                <div class="form-group">
+                    <label for="txtEmailSubject">Email Subject</label>
+                    <input type="text" class="form-control" id="txtEmailSubject" name="txtEmailSubject" />
+                </div>
+                <div class="form-group">
+                    <label for="editor1">Email Body</label>
+                    <textarea id="editor1" name="editor1" class=""></textarea>
+                </div>
+
+
+                <div id="addFileDiv" class="mt-3">
+                    <div class="form-group">
+                        <label class="myFile form-group">
+                            <i class="fa fa-upload" style="font-size:25px;">&nbsp; </i><span id="attachmentPlaceHolder">Add file</span>
+                            <input id="fileAttachment1" type="file" onchange="commonTemplate.getAttachmentFileName()" multiple />
+                        </label>
+                    </div>
+                </div>
+                <div id="attachemtnSelectedFileDiv"></div>
+                <div id="attachmentPreview" class="mt-2"> </div>
+            </div>
+        </div>
+    </div>  
+</div>
+

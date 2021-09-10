@@ -1,0 +1,584 @@
+﻿
+@{
+    ViewBag.Title = "Report";
+    Layout = "~/Views/Shared/_LayoutReport.cshtml";
+}
+
+<link href="https://kendo.cdn.telerik.com/2020.2.617/styles/kendo.common.min.css" rel="stylesheet" />
+<link href="https://kendo.cdn.telerik.com/2020.2.617/styles/kendo.default.min.css" rel="stylesheet" />
+<script src="https://kendo.cdn.telerik.com/2020.2.617/js/kendo.all.min.js"></script>
+<script src="~/Scripts/CustomScripts/FinancialKendoReports.js?v=@System.Configuration.ConfigurationManager.AppSettings["jQueryVersion"]"></script>
+<script src="https://kendo.cdn.telerik.com/2019.2.514/js/jszip.min.js"></script>
+
+<style>
+    .innerBody {
+    }
+        btnOutlineTab {
+        outline: thin !important;
+        box-shadow: none;
+        border: black 2px solid;
+    }
+
+    .btnOutlineTab:focus {
+        /*outline: thin !important;*/
+        box-shadow: none;
+        border: #454545 2px solid;
+    }
+
+</style>
+<style>
+    /*
+            Use the DejaVu Sans font for display and embedding in the PDF file.
+            The standard PDF fonts have no support for Unicode characters.
+        */
+    .k-grid {
+        font-family: "DejaVu Sans", "Arial", sans-serif;
+        width: 83vw;
+    }
+
+    /*.k-grid .k-grid-header {
+            padding: 0 !important;
+        }
+
+        .k-grid .k-grid-content {
+            overflow-y: visible;
+        }*/
+</style>
+
+<script>
+    /*
+        This demo renders the grid in "DejaVu Sans" font family, which is
+        declared in kendo.common.css. It also declares the paths to the
+        fonts below using <tt>kendo.pdf.defineFont</tt>, because the
+        stylesheet is hosted on a different domain.
+    */
+    kendo.pdf.defineFont({
+        "DejaVu Sans": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans.ttf",
+        "DejaVu Sans|Bold": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Bold.ttf",
+        "DejaVu Sans|Bold|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+        "DejaVu Sans|Italic": "https://kendo.cdn.telerik.com/2016.2.607/styles/fonts/DejaVu/DejaVuSans-Oblique.ttf",
+        "WebComponentsIcons": "https://kendo.cdn.telerik.com/2017.1.223/styles/fonts/glyphs/WebComponentsIcons.ttf"
+    });
+</script>
+
+<!-- Load Pako ZLIB library to enable PDF compression -->
+<script src="https://kendo.cdn.telerik.com/2020.2.617/js/pako_deflate.min.js"></script>
+
+@*<script type="text/x-kendo-template" id="dropDownTemplate">
+        <div class="toolbar">
+            <label class="category-label" for="category">Show products by category:</label>
+            <select class="" id="inputGroupSelect">
+                <option>Select</option>
+                <option value="1">Category</option>
+                <option value="2">Solicitor 1</option>
+                <option value="3">Solicitor 2</option>
+                <option value="4">Solicitor 3</option>
+                <option value="5">Solicitor 4</option>
+            </select>
+        </div>
+    </script>*@
+
+
+<script type="x/kendo-template" id="page-template">
+    <div class="page-template">
+        <div class="header">
+            <div style="float: right">Page #: pageNum # of #: totalPages #</div>
+            <span style="color:black" class="#= (pageNum > 1? 'd-none' : '') #">[reportFilterData]</span><br />
+        </div>
+        @* <div class="watermark"></div>*@
+        <div class="footer">
+            Page #: pageNum # of #: totalPages #
+        </div>
+    </div>
+</script>
+
+<style>
+    /* Page Template for the exported PDF */
+    .page-template {
+        font-family: "DejaVu Sans", "Arial", sans-serif;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+    }
+
+        .page-template .header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            border-bottom: 1px solid #888;
+            color: #888;
+        }
+
+        .page-template .footer {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            border-top: 1px solid #888;
+            text-align: center;
+            color: #888;
+        }
+
+        .page-template .watermark {
+            font-weight: bold;
+            font-size: 400%;
+            text-align: center;
+            margin-top: 30%;
+            color: #aaaaaa;
+            opacity: 0.1;
+            transform: rotate(-35deg) scale(1.7, 1.5);
+        }
+
+
+    /* Style the tab */
+    .tab {
+        overflow: hidden;
+        /*border: 1px solid #ccc;*/
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-top: 1px solid #ccc;
+        background-color: #f1f1f1;
+    }
+
+        /* Style the buttons inside the tab */
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+
+            /* Change background color of buttons on hover */
+            .tab button:hover {
+                background-color: #ddd;
+            }
+
+            /* Create an active/current tablink class */
+            .tab button.active {
+                background-color: #fff;
+            }
+
+    /* Style the tab content */
+    .tabcontent {
+        padding: 6px 6px;
+        border: 1px solid #ccc;
+        border-top: none;
+    }
+
+    .tabcontentFilter {
+        padding: 6px 6px;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+    }
+
+    #selectedGroupFieldTo h5, #selectGroupFieldFrom h5 {
+        cursor: pointer;
+        padding: 2px 0px 2px 16px;
+        border-radius: 5px;
+    }
+</style>
+
+<div id="gridSettingModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document" style="overflow-y: initial !important">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><span class="badge badge-pill badge-primary"><i class="fa fa-gear"></i> &nbsp; <span>Listing Setting </span></span></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body pb-0 settingButtonContainer">
+                <div class="row">
+                    <div class="col-sm-6 text-left pr-0">
+                        <label class="text-left pl-4" for="chkAllFinancialColumns">
+                            <input type="checkbox" class="form-check-input" id="chkAllFinancialColumns">
+                            <span class="pl-1"></span>
+                        </label>
+                    </div>
+                    <div class="col-sm-6 text-right">
+                        <button type="button" id="btnKendoGridOrderSave" class="btn btn-info">Save</button>
+                        <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+                <div class="container mt-2" style="height:75vh; overflow-y:auto;">
+                    <form id="frmGridSetting" novalidate="novalidate">
+                        <div class="row" id="gridSettingModalBody">
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @*<div class="modal-footer">
+                    <button type="button" id="btnKendoGridOrderSave" class="btn btn-primary">Save</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>*@
+        </div>
+    </div>
+</div>
+
+<div class="innerBody container-fluid" style="left:270px;">
+
+    <div class="modal" id="groupFieldsSelectModal" role="dialog" tabindex="-1">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><span class="badge badge-pill badge-primary" id="HeaderAliyaAddEditModal">Select Group</span></h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <h5>Select Group Fields</h5>
+                                <div id="selectGroupFieldFrom" class="border rounded px-2 pt-2 text-left">
+                                    <h5 data-name="PersonId">PersonId</h5>
+                                    <h5 data-name="PersonAliya">PersonAliya</h5>
+                                    <h5 data-name="PersonAliyaH">PersonAliyaH</h5>
+                                    <h5 data-name="Tribe">Tribe</h5>
+                                    <h5 data-name="TribeH">TribeH</h5>
+                                    <h5 data-name="Title">Title</h5>
+                                    <h5 data-name="SuffixH">SuffixH</h5>
+                                    <h5 data-name="TitleH">TitleH</h5>
+                                    <h5 data-name="FatherName">FatherName</h5>
+                                    <h5 data-name="MotherName">MotherName</h5>
+                                    <h5 data-name="Deceased">Deceased</h5>
+                                    <h5 data-name="Married">Married</h5>
+                                    <h5 data-name="PledgeDate" class="pledge">PledgeDate</h5>
+                                    <h5 data-name="DueDate" class="pledge">DueDate</h5>
+                                    <h5 data-name="Term">Term</h5>
+                                    <h5 data-name="PaymentMethod" class="payment">PaymentMethod</h5>
+                                    <h5 data-name="PaymentDate" class="payment">PaymentDate</h5>
+                                    <h5 data-name="DepositeDate" class="payment">DepositeDate</h5>
+                                    <h5 data-name="Category">Category</h5>
+                                    <h5 data-name="Campaign">Campaign</h5>
+                                    <h5 data-name="Year">Year</h5>
+                                    <h5 data-name="PledgeAliya" class="pledge">PledgeAliya</h5>
+                                    <h5 data-name="Parsha" class="pledge">Parsha</h5>
+                                    <h5 data-name="Solicitor1">Solicitor1</h5>
+                                    <h5 data-name="Solicitor2">Solicitor2</h5>
+                                    <h5 data-name="Solicitor3">Solicitor3</h5>
+                                    <h5 data-name="Solicitor4">Solicitor4</h5>
+                                    <h5 data-name="Event1">Event1</h5>
+                                    <h5 data-name="Event2">Event2</h5>
+                                    <h5 data-name="Honoree1">Honoree1</h5>
+                                    <h5 data-name="Honoree2">Honoree2</h5>
+                                    <h5 data-name="Neighborhood">Neighborhood</h5>
+                                    <h5 data-name="City">City</h5>
+                                    <h5 data-name="State">State</h5>
+                                    <h5 data-name="Zip">Zip</h5>
+                                    <h5 data-name="Country">Country</h5>
+                                </div>
+                            </div>
+                            <div class="col-sm-2 text-center my-auto">
+                                <a class="btn btn-secondary text-white" onclick="FinancialKendoReports.MoveSelectedContentRight()"><i class="fas fa-arrow-right"></i></a><br /><br />
+                                <a class="btn btn-secondary text-white" onclick="FinancialKendoReports.MoveSelectedContentLeft()"><i class="fas fa-arrow-left"></i></a>
+                            </div>
+                            <div class="col-sm-4">
+                                <h5>Selected Group Fields</h5>
+                                <div id="selectedGroupFieldTo" class="border rounded px-2 pt-2 text-left">
+                                </div>
+                            </div>
+                            <div class="col-sm-2 text-center my-auto">
+                                <a class="btn btn-secondary text-white" onclick="FinancialKendoReports.MoveSelectedContentUp()"><i class="fas fa-arrow-up"></i></a>
+                                <a class="btn btn-secondary text-white" onclick="FinancialKendoReports.MoveSelectedContentDown()"><i class="fas fa-arrow-down"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" onclick="FinancialKendoReports.GetFilterdDataByGroupButton()" class="btn btn-primary btn-round">Apply</button>
+                    <button type="button" class="btn btn-danger btn-round" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--<div id="divToContainTabs" style="width: 83.88vw;">-->
+    <div id="divToContainTabs">
+        <div class="tab">
+            <button class="tablinks btnGrouped active" onclick="openTab(event, 'grouped')" id="defaultOpen">Grouped</button>
+            <button class="tablinks btnDetailed" onclick="openTab(event, 'detailed')">Detailed</button>
+        </div>
+
+        <div id="reportContainer">
+            <div id="reportFilters" class="tabcontentFilter">
+                <div class="row">
+                    <div class="col-sm-6" id="mainFilters">
+                    </div>
+                    <div class="col-sm-6" id="additionalFilters">
+                    </div>
+                </div>
+                <div class="row justify-content-end my-1 d-none" id="rowGroupSelector">
+                    <div class="col-sm-8 my-auto">
+                        <div class="btn-toolbar" role="toolbar">
+                            <div class="btn-group" role="group">
+                                <a class="export-pdf">
+                                    <span>
+                                        <span title="Export to Pdf" data-toggle="tooltip"><i class="pdfIcon" aria-hidden="true"></i></span>
+                                    </span>
+                                </a>
+                            </div>
+                            <div class="btn-group ml-2" role="group">
+                                <a class="export-excel">
+                                    <span>
+                                        <span title="Export to excel" data-toggle="tooltip"><i class="excelIcon" aria-hidden="true"></i></span>
+                                    </span>
+                                </a>
+                            </div>
+                            <div class="btn-group ml-2" role="group">
+                                <a class="" href="javascript:void(0)" onclick="FinancialKendoReports.GetColumnModal()" title="Setting for grid column" data-toggle="tooltip" style="position: relative; top: -10px;">
+                                    <span>
+                                        <span><i class="fa fa-gear fa-2x"></i></span>
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="col-sm-4 my-auto">
+                        @*<a class="float-right mr-4" href="javascript:void(0)" onclick="FinancialKendoReports.GetColumnModal()" title="Setting for grid column" data-toggle="tooltip"><span><span><i class="fa fa-gear fa-2x"></i></span></span></a>*@
+                    </div>
+                    @*<div class="col-sm-3">
+                            <div class="input-group d-none" id="groupSelectorInputGroup">
+                                <label class="pt-2">Show Column </label>
+                                <select class="custom-select ml-2" id="inputGroupSelect">
+                                    <option value="">Select</option>
+                                    <option value="Category">Category</option>
+                                    <option value="Campaign">Campaign</option>
+                                    <option value="Year">Year</option>
+                                    <option value="Solicitor1">Solicitor 1</option>
+                                    <option value="Solicitor2">Solicitor 2</option>
+                                    <option value="Solicitor3">Solicitor 3</option>
+                                    <option value="Solicitor4">Solicitor 4</option>
+                                    <option value="Event1">Event 1</option>
+                                    <option value="Event2">Event 2</option>
+                                    <option value="Phone">Phone</option>
+                                    <option value="Cell">Cell</option>
+                                    <option value="Address">Address</option>
+                                    <option value="City">City</option>
+                                    <option value="Neighborhood">Neighborhood</option>
+                                    <option value="State">State</option>
+                                    <option value="Zip">Zip</option>
+                                </select>
+                                <div class="input-group-append">
+                                    <input type="button" class="btn btn-secondary" id="showColumnButton" value="Show">
+                                </div>
+                            </div>
+                        </div>*@
+                </div>
+            </div>
+
+
+
+            <!--Grouped tab-->
+            @*<div id="grouped" class="tabcontent container-fluid">*@
+            <div id="grouped" class="tabcontent">
+                <div class="row my-1" style="min-height: 25px;">
+                    <div class="col-sm-5">
+                        <div class="btn-toolbar" role="toolbar">
+                            <div class="btn-group" role="group">
+                                <a class="export-pdf">
+                                    <span>
+                                        <span title="Export to Pdf" data-toggle="tooltip"><i class="pdfIcon" aria-hidden="true"></i></span>
+                                    </span>
+                                </a>
+                            </div>
+                            <div class="btn-group ml-2" role="group">
+                                <a class="export-excel">
+                                    <span>
+                                        <span title="Export to excel" data-toggle="tooltip"><i class="excelIcon" aria-hidden="true"></i></span>
+                                    </span>
+                                </a>
+                            </div>
+                            <div class="btn-group ml-2" role="group">
+                                <input type="button" class="btn btn-secondary" value="Group Data" id="btnGroupData" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 my-auto text-right">
+                        <div id="groupedOnReport"></div>
+                    </div>
+                    <div class="col-sm-1 text-right">
+                        @*<input type="button" class="btn btn-secondary" value="Group Data" id="btnGroupData" />*@
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        @*<h3>Grouped data</h3>*@
+                        <div id="groupedDataGrid"></div>
+                        <ul id="context-menu">
+                            <li id="getDetails">Show Details</li>
+                            <li id="cancel">Cancel</li>
+                        </ul>
+                    </div>
+                    <script>
+                        $("#context-menu").kendoContextMenu({
+                            target: "#groupedDataGrid",
+                            filter: ".k-grid-content tr:not(.k-grouping-row )",
+                            select: function (e) {
+                                var row = $(e.target);
+                                var grid = $("#groupedDataGrid").data("kendoGrid");
+                                var item = e.item.id;
+                                //console.log($(e.target));
+                                switch (item) {
+                                    case "getDetails":
+                                        FinancialKendoReports.GetDetailedReportForSelectedItem(e);
+                                        break;
+                                    case "cancel":
+                                        //console.log("Other functionlity");
+                                        break;
+                                    default:
+                                        break;
+                                };
+                            }
+                        });
+                    </script>
+                </div>
+            </div>
+
+            <!--Detailed tab-->
+            <div id="detailed" class="tabcontent">
+                <div id="dataGrid"></div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="financialSaveFilterModal" data-backdrop="static" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Save filter</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="financialSaveFilterForm" onsubmit="return false">
+                        <div class="form-group" >
+                        <label for="financialSaveFilterInput">Save Filter As</label>
+                        <input type="text" class="form-control" id="financialSaveFilterInput" name="financialSaveFilterInput" autocomplete="off" />
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer" style="min-height:70px">
+                    <button type="button" class="btn btn-primary btnOutlineTab" id="financialSaveFilterSave">Save</button>
+                    <button type="button" class="btn btn-secondary btnOutlineTab" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function openTab(evt, tabName) {
+            localStorage.setItem('tabSelectedFinancial', tabName)
+            if (tabName != 'grouped') {
+                $("#groupSelectorInputGroup").removeClass('d-none')
+                $("#rowGroupSelector").removeClass('d-none')
+            } else {
+                $("#groupSelectorInputGroup").addClass('d-none')
+                $("#rowGroupSelector").addClass('d-none')
+            }
+            $(".tabcontent").addClass('d-none');
+            $(".tablinks").removeClass('active');
+            $(evt.target).addClass('active');
+            $("#" + tabName).removeClass("d-none");
+        }
+
+        /*
+        var selectedTab = localStorage.getItem('tabSelectedFinancial');
+        if (selectedTab != null) {
+            if (selectedTab == 'grouped') {
+                $(".tab .btnGrouped").click();
+            } else if (selectedTab == 'detailed') {
+                $(".tab .btnDetailed").click();
+            }
+            localStorage.removeItem('tabSelectedFinancial');
+        } else {
+            $("#defaultOpen").click();
+        }*/
+
+        $("#defaultOpen").click();
+
+
+        $(function () {
+            //$("#exportDetailed").click(function () {
+            //    var grid = $(".tabcontent").not('.d-none').find('.k-grid').data("kendoGrid");
+            //    var progress = $.Deferred();
+            //    //kendo.drawing.drawDOM($("#reportFilters"))
+            //    //    .done(function (report) {
+            //    grid._drawPDF(progress)
+            //        .then(function (root) {
+            //            //root.children.unshift(report);
+            //            return kendo.drawing.exportPDF(root, {
+
+            //            });
+            //        })
+            //        .done(function (dataURI) {
+            //            //console.log("Okay");
+            //            kendo.saveAs({
+            //                dataURI: dataURI,
+            //                fileName: "test.pdf"
+            //            });
+            //            progress.resolve();
+            //        })
+            //});
+            $(".export-excel").click(function () {
+                //alert("dd");
+                var grid = $(".tabcontent").not('.d-none').find('.k-grid').data("kendoGrid");
+                grid.saveAsExcel();
+            });
+
+
+            $(".export-pdf").click(function () {
+                var grid = $(".tabcontent").not('.d-none').find('.k-grid').data("kendoGrid");
+                //var grid = $("#groupedDataGrid").data("kendoGrid");
+                var progress = $.Deferred();
+
+                grid._drawPDF(progress)
+                    .then(function (root) {
+                        return kendo.drawing.exportPDF(root, {
+                        });
+                    })
+                    .done(function (dataURI) {
+                        kendo.saveAs({
+                            dataURI: dataURI,
+                            fileName: "Export.pdf"
+                        });
+                        progress.resolve();
+                    })
+
+
+                //var grid = $("#groupedDataGrid").data("kendoGrid");
+                //var progress = $.Deferred();
+
+                /*
+                kendo.drawing.drawDOM($("#reportFilters"))
+                    .done(function (header) {
+                       // kendo.drawing.drawDOM($("#footer"))
+                        //    .done(function (footer) {
+                                grid._drawPDF(progress)
+                                    .then(function (root) {
+                                        root.children.unshift(header);
+                                        root.children.push(header);
+                                        return kendo.drawing.exportPDF(root, { multiPage: true });
+                                    })
+                                    .done(function (dataURI) {
+                                        kendo.saveAs({
+                                            dataURI: dataURI,
+                                            fileName: "Export.pdf"
+                                        });
+                                        progress.resolve();
+                                    })
+                            //});
+                    })
+                */
+            });
+        });
+    </script>
+</div>
